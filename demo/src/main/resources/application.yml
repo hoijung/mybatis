@@ -1,0 +1,22 @@
+server:
+  port: 8081
+
+spring:
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5432/postgres
+    username: postgres
+    password: 12345678
+    driver-class-name: org.postgresql.Driver
+
+mybatis:
+  mapper-locations: classpath:/mapper/**/*.xml
+  configuration:
+      log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+logging:
+   file:
+      name: logs/app.log
+   charset:
+      console: UTF-8
+      file: UTF-8
+   
