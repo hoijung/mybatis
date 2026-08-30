@@ -4912,3 +4912,19 @@ org.postgresql.util.PSQLException: 오류: "업체명담당자" 이름의 칼럼
 2026-08-30T23:40:29.922+09:00  INFO 22656 --- [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
 2026-08-30T23:40:29.926+09:00  INFO 22656 --- [RMI TCP Connection(6)-172.30.1.53] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
 2026-08-30T23:40:29.929+09:00  INFO 22656 --- [RMI TCP Connection(6)-172.30.1.53] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-08-30T23:45:11.308+09:00  INFO 25232 --- [main] com.example.demo.DemoApplication         : Starting DemoApplication using Java 17.0.12 with PID 25232 (C:\Users\user\git\repository\demo\bin\main started by user in C:\Users\user\git\repository\demo)
+2026-08-30T23:45:11.315+09:00  INFO 25232 --- [main] com.example.demo.DemoApplication         : No active profile set, falling back to 1 default profile: "default"
+2026-08-30T23:45:12.863+09:00  WARN 25232 --- [main] o.m.s.mapper.ClassPathMapperScanner      : Skipping MapperFactoryBean with name 'userMapper' and 'com.example.demo.mapper.UserMapper' mapperInterface. Bean already defined with the same name!
+2026-08-30T23:45:12.868+09:00  WARN 25232 --- [main] o.m.s.mapper.ClassPathMapperScanner      : No MyBatis mapper was found in '[com.example.demo.mapper]' package. Please check your configuration.
+2026-08-30T23:45:13.821+09:00  INFO 25232 --- [main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8081 (http)
+2026-08-30T23:45:13.841+09:00  INFO 25232 --- [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-08-30T23:45:13.842+09:00  INFO 25232 --- [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.24]
+2026-08-30T23:45:13.966+09:00  INFO 25232 --- [main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 2532 ms
+2026-08-30T23:45:15.706+09:00  INFO 25232 --- [main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8081 (http) with context path '/'
+2026-08-30T23:45:15.738+09:00  INFO 25232 --- [main] com.example.demo.DemoApplication         : Started DemoApplication in 5.415 seconds (process running for 6.95)
+2026-08-30T23:46:01.299+09:00  INFO 25232 --- [http-nio-8081-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-08-30T23:46:01.300+09:00  INFO 25232 --- [http-nio-8081-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-08-30T23:46:01.304+09:00  INFO 25232 --- [http-nio-8081-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 4 ms
+2026-08-30T23:46:01.492+09:00  INFO 25232 --- [http-nio-8081-exec-1] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-08-30T23:46:02.338+09:00  INFO 25232 --- [http-nio-8081-exec-1] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@15c487d8
+2026-08-30T23:46:02.377+09:00  INFO 25232 --- [http-nio-8081-exec-1] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
