@@ -57,7 +57,7 @@ public class MyBatisXmlReloader {
 			
 			String path = sub.getFile().getPath();
 
-			if ("C:\\Users\\user\\eclipse-workspace\\demo\\bin\\main\\mapper\\mybatis-config.xml".equals(path)) {
+			if (path.contains("mybatis-config")) {
 				continue;
 			}
 			System.out.println("[MyBatis XML RELOAD] " + path) ;

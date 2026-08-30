@@ -9,7 +9,8 @@
     <select id="selectUser"
             resultType="map">
 
-        SELECT 인쇄ID, 품목명, 주문번호  from public.인쇄정보
+        SELECT 인쇄ID, 품목명, 주문번호, 전화번호, 업체명_담당자  from public.인쇄정보
+        limit 12
 
     </select>
 
