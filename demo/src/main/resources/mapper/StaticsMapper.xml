@@ -109,7 +109,13 @@
 
             FROM public.인쇄정보
 
-            WHERE 주문일자 BETWEEN #{startDate} || '01' AND #{startDate} || '31'
+            WHERE 주문일자 like #{startDate} || '%'
+            <if test="distributeYn != null and distributeYn != ''">
+                AND coalesce(배분여부, 'false') = #{distributeYn}
+            </if>
+            <if test="existOrderYn != null and existOrderYn != ''">
+                AND coalesce(기존주문여부, '신규주문') = #{existOrderYn}
+            </if>
 
             GROUP BY 품목명
 
@@ -160,7 +166,7 @@
                                      else null
                                 end) as 인쇄횟수
                           from public.인쇄정보 A)
-                where 주문일자 between #{startDate}||'01' and #{endDate}||'31'
+                where 주문일자 like #{startDate} || '%'
                 <if test="distributeYn != null and distributeYn != ''">
                   and coalesce(배분여부, 'false') = #{distributeYn}
                 </if>
@@ -186,7 +192,7 @@
                         select '피킹' as stateName,
                                sum(case when coalesce(피킹완료, '') in ('Y', 'YES', 'true', '1', '완료', '완료됨') then 1 else 0 end) as stateCount
                           from public.인쇄정보
-                         where 주문일자 between #{startDate}||'01' and #{endDate}||'31'
+                         where 주문일자 like #{startDate} || '%'
                          <if test="distributeYn != null and distributeYn != ''">
                            and coalesce(배분여부, 'false') = #{distributeYn}
                          </if>
@@ -197,7 +203,7 @@
                         select '인쇄' as stateName,
                                sum(case when coalesce(인쇄완료, '') in ('Y', 'YES', 'true', '1', '완료', '완료됨') then 1 else 0 end) as stateCount
                           from public.인쇄정보
-                         where 주문일자 between #{startDate}||'01' and #{endDate}||'31'
+                         where 주문일자 like #{startDate} || '%'
                          <if test="distributeYn != null and distributeYn != ''">
                            and coalesce(배분여부, 'false') = #{distributeYn}
                          </if>
@@ -208,7 +214,7 @@
                         select '배분' as stateName,
                                sum(case when coalesce(배분여부, '') in ('Y', 'YES', 'true', '1', '완료', '배분', '배분완료') then 1 else 0 end) as stateCount
                           from public.인쇄정보
-                         where 주문일자 between #{startDate}||'01' and #{endDate}||'31'
+                         where 주문일자 like #{startDate} || '%'
                          <if test="distributeYn != null and distributeYn != ''">
                            and coalesce(배분여부, 'false') = #{distributeYn}
                          </if>
@@ -219,7 +225,7 @@
                         select '완료' as stateName,
                                sum(case when coalesce(완료여부, '') in ('Y', 'YES', 'true', '1', '완료', '완료됨') then 1 else 0 end) as stateCount
                           from public.인쇄정보
-                         where 주문일자 between #{startDate}||'01' and #{endDate}||'31'
+                         where 주문일자 like #{startDate} || '%'
                          <if test="distributeYn != null and distributeYn != ''">
                            and coalesce(배분여부, 'false') = #{distributeYn}
                          </if>
@@ -261,7 +267,7 @@
                                    else '미확인'
                                end as stateName
                           from public.인쇄정보
-                         where 주문일자 between #{startDate}||'01' and #{endDate}||'31'
+                         where 주문일자 like #{startDate} || '%'
                          <if test="distributeYn != null and distributeYn != ''">
                            and coalesce(배분여부, 'false') = #{distributeYn}
                          </if>

@@ -26,6 +26,7 @@ public class MyBatisConfig {
                 new ClassPathResource("mapper/mybatis-config.xml");
 
         factory.setConfigLocation(config);
+        factory.setPlugins(new SqlLoggingInterceptor());
         
 //        org.springframework.core.io.Resource[] resources = new PathMatchingResourcePatternResolver()
 //                .getResources("classpath:/mapper/**/*.xml");

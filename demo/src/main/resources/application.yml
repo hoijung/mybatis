@@ -27,8 +27,9 @@ logging:
     console: UTF-8
     file: UTF-8
   level:
-    root: INFO
-    com.example.demo.mapper: INFO
+    root: info
+    com.example.demo.SqlLoggingInterceptor: debug
+    com.example.demo.mapper: WARN
     org.apache.ibatis: WARN
     org.mybatis: WARN
    
