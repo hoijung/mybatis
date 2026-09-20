@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.mapper.StaticsMapper">
+
+    <select id="selectUser"
+            parameterType="map"
+            resultType="map">
+
+        SELECT substring(주문일자 from 1 for 7) as orderDate
+              ,count(*) as orderCount
+              ,coalesce(sum(결재금액), 0) as totalAmount
+              ,sum(인쇄횟수) as totalPrintCount
+         from (select  A.*
+                     , (case when 인쇄도수 = '1도인쇄' then 1 
+	                        when 인쇄도수 = '2도인쇄' then 2 
+	                        when 인쇄도수 = '3도인쇄' then 3 
+	                        when 인쇄도수 = '4도인쇄' then 4 
+	                        when 인쇄도수 = 'CMYK인쇄' then 1
+	                        else 0 
+	                    end) * 
+	                 	(case when 인쇄면 = '단면' then 1 
+	                        when 인쇄면 = '양면' then 2 
+	                        else 0
+	                  	end) *
+	                 	(case when isnumber(replace(제작장수,',','')) then cast(replace(제작장수,',','') as integer) 
+	                     	  else 0 
+	                 	end) *
+	                	 (case when 인쇄방법 in ('실크인쇄', '간편인쇄') then 1 
+	                       else null 
+	                 	end) as 인쇄횟수
+	             from  public.인쇄정보 A) 
+         where 주문일자 between #{startDate}||'01' and #{endDate}||'31'
+         <if test="distributeYn != null and distributeYn != ''">
+           and coalesce(배분여부, 'false') = #{distributeYn}
+         </if>
+         <if test="existOrderYn != null and existOrderYn != ''">
+           and coalesce(기존주문여부, '신규주문') = #{existOrderYn}
+         </if>
+         group by substring(주문일자 from 1 for 7)
+         order by substring(주문일자 from 1 for 7) asc
+
+    </select>
+
+<select id="selectProd" parameterType="map" resultType="map">
+
+    SELECT
+        b.prodName,
+        SUM(b.orderCount) AS orderCount,
+        SUM(b.totalAmount) AS totalAmount,
+        SUM(b.totalPrintCount) AS totalPrintCount
+
+    FROM
+    (
+        SELECT
+            CASE
+                WHEN a.orderCount <![CDATA[ < ]]> #{etcThreshold}
+                THEN '기타'
+                ELSE a.prodName
+            END AS prodName,
+
+            a.orderCount,
+            a.totalAmount,
+            a.totalPrintCount
+
+        FROM
+        (
+            SELECT
+                품목명 AS prodName,
+
+                COUNT(*) AS orderCount,
+
+                COALESCE(SUM(결재금액), 0) AS totalAmount,
+
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN 인쇄도수 = '1도인쇄' THEN 1
+                            WHEN 인쇄도수 = '2도인쇄' THEN 2
+                            WHEN 인쇄도수 = '3도인쇄' THEN 3
+                            WHEN 인쇄도수 = '4도인쇄' THEN 4
+                            WHEN 인쇄도수 = 'CMYK인쇄' THEN 1
+                            ELSE 0
+                        END
+                        *
+                        CASE
+                            WHEN 인쇄면 = '단면' THEN 1
+                            WHEN 인쇄면 = '양면' THEN 2
+                            ELSE 0
+                        END
+                        *
+                        CASE
+                            WHEN isnumber(replace(제작장수, ',', ''))
+                            THEN CAST(replace(제작장수, ',', '') AS integer)
+                            ELSE 0
+                        END
+                        *
+                        CASE
+                            WHEN 인쇄방법 IN ('실크인쇄', '간편인쇄')
+                            THEN 1
+                            ELSE 0
+                        END
+                    ),
+                    0
+                ) AS totalPrintCount
+
+            FROM public.인쇄정보
+
+            WHERE 주문일자 BETWEEN #{startDate} || '01' AND #{startDate} || '31'
+
+            GROUP BY 품목명
+
+        ) a
+
+    ) b
+
+    GROUP BY b.prodName
+
+    ORDER BY
+        CASE
+            WHEN b.prodName = '기타' THEN 1
+            ELSE 0
+        END,
+        b.prodName
+
+</select>
+
+    <select id="selectTeam"
+            parameterType="map"
+            resultType="map">
+
+        select case when teamName is null or trim(teamName) = '' then '미배정' else teamName end as teamName
+              ,sum(orderCount)      as orderCount
+              ,sum(totalAmount)     as totalAmount
+              ,sum(totalPrintCount) as totalPrintCount
+          from (
+                SELECT coalesce(인쇄담당팀, '미배정') as teamName
+                      ,count(*)                   as orderCount
+                      ,coalesce(sum(결재금액), 0)  as totalAmount
+                      ,sum(인쇄횟수)               as totalPrintCount
+                 from (select  A.*
+                             , (case when 인쇄도수 = '1도인쇄' then 1
+                                     when 인쇄도수 = '2도인쇄' then 2
+                                     when 인쇄도수 = '3도인쇄' then 3
+                                     when 인쇄도수 = '4도인쇄' then 4
+                                     when 인쇄도수 = 'CMYK인쇄' then 1
+                                     else 0
+                                end) *
+                               (case when 인쇄면 = '단면' then 1
+                                     when 인쇄면 = '양면' then 2
+                                     else 0
+                                end) *
+                               (case when isnumber(replace(제작장수,',','')) then cast(replace(제작장수,',','') as integer)
+                                     else 0
+                                end) *
+                               (case when 인쇄방법 in ('실크인쇄', '간편인쇄') then 1
+                                     else null
+                                end) as 인쇄횟수
+                          from public.인쇄정보 A)
+                where 주문일자 between #{startDate}||'01' and #{endDate}||'31'
+                <if test="distributeYn != null and distributeYn != ''">
+                  and coalesce(배분여부, 'false') = #{distributeYn}
+                </if>
+                <if test="existOrderYn != null and existOrderYn != ''">
+                  and coalesce(기존주문여부, '신규주문') = #{existOrderYn}
+                </if>
+                group by 인쇄담당팀
+               )
+         group by teamName
+         order by teamName
+
+    </select>
+
+    <select id="selectState"
+            parameterType="map"
+            resultType="map">
+
+        <choose>
+            <when test="stateType == 'all'">
+                select stateName as stateName,
+                       stateCount as stateCount
+                  from (
+                        select '피킹' as stateName,
+                               sum(case when coalesce(피킹완료, '') in ('Y', 'YES', 'true', '1', '완료', '완료됨') then 1 else 0 end) as stateCount
+                          from public.인쇄정보
+                         where 주문일자 between #{startDate}||'01' and #{endDate}||'31'
+                         <if test="distributeYn != null and distributeYn != ''">
+                           and coalesce(배분여부, 'false') = #{distributeYn}
+                         </if>
+                         <if test="existOrderYn != null and existOrderYn != ''">
+                           and coalesce(기존주문여부, '신규주문') = #{existOrderYn}
+                         </if>
+                        union all
+                        select '인쇄' as stateName,
+                               sum(case when coalesce(인쇄완료, '') in ('Y', 'YES', 'true', '1', '완료', '완료됨') then 1 else 0 end) as stateCount
+                          from public.인쇄정보
+                         where 주문일자 between #{startDate}||'01' and #{endDate}||'31'
+                         <if test="distributeYn != null and distributeYn != ''">
+                           and coalesce(배분여부, 'false') = #{distributeYn}
+                         </if>
+                         <if test="existOrderYn != null and existOrderYn != ''">
+                           and coalesce(기존주문여부, '신규주문') = #{existOrderYn}
+                         </if>
+                        union all
+                        select '배분' as stateName,
+                               sum(case when coalesce(배분여부, '') in ('Y', 'YES', 'true', '1', '완료', '배분', '배분완료') then 1 else 0 end) as stateCount
+                          from public.인쇄정보
+                         where 주문일자 between #{startDate}||'01' and #{endDate}||'31'
+                         <if test="distributeYn != null and distributeYn != ''">
+                           and coalesce(배분여부, 'false') = #{distributeYn}
+                         </if>
+                         <if test="existOrderYn != null and existOrderYn != ''">
+                           and coalesce(기존주문여부, '신규주문') = #{existOrderYn}
+                         </if>
+                        union all
+                        select '완료' as stateName,
+                               sum(case when coalesce(완료여부, '') in ('Y', 'YES', 'true', '1', '완료', '완료됨') then 1 else 0 end) as stateCount
+                          from public.인쇄정보
+                         where 주문일자 between #{startDate}||'01' and #{endDate}||'31'
+                         <if test="distributeYn != null and distributeYn != ''">
+                           and coalesce(배분여부, 'false') = #{distributeYn}
+                         </if>
+                         <if test="existOrderYn != null and existOrderYn != ''">
+                           and coalesce(기존주문여부, '신규주문') = #{existOrderYn}
+                         </if>
+                       ) d
+                 order by stateName
+            </when>
+            <otherwise>
+                select stateName as stateName,
+                       count(*) as stateCount
+                  from (
+                        select case #{stateType}
+                                   when 'pickingYn' then
+                                       case
+                                           when coalesce(피킹완료, '') in ('Y', 'YES', 'true', '1', '완료', '완료됨') then '피킹'
+                                           when coalesce(피킹완료, '') in ('N', 'NO', 'false', '0', '미완료', '미완료됨', '') then '미피킹'
+                                           else coalesce(cast(피킹완료 as varchar), '미확인')
+                                       end
+                                   when 'printYn' then
+                                       case
+                                           when coalesce(인쇄완료, '') in ('Y', 'YES', 'true', '1', '완료', '완료됨') then '인쇄'
+                                           when coalesce(인쇄완료, '') in ('N', 'NO', 'false', '0', '미완료', '미완료됨', '') then '미인쇄'
+                                           else coalesce(cast(인쇄완료 as varchar), '미확인')
+                                       end
+                                   when 'distributeYn' then
+                                       case
+                                           when coalesce(배분여부, '') in ('Y', 'YES', 'true', '1', '완료', '배분', '배분완료') then '배분'
+                                           when coalesce(배분여부, '') in ('N', 'NO', 'false', '0', '미완료', '미배분', '미배분완료', '') then '미배분'
+                                           else coalesce(cast(배분여부 as varchar), '미확인')
+                                       end
+                                   when 'completeYn' then
+                                       case
+                                           when coalesce(완료여부, '') in ('Y', 'YES', 'true', '1', '완료', '완료됨') then '완료'
+                                           when coalesce(완료여부, '') in ('N', 'NO', 'false', '0', '미완료', '미완료됨', '') then '미완료'
+                                           else coalesce(cast(완료여부 as varchar), '미확인')
+                                       end
+                                   else '미확인'
+                               end as stateName
+                          from public.인쇄정보
+                         where 주문일자 between #{startDate}||'01' and #{endDate}||'31'
+                         <if test="distributeYn != null and distributeYn != ''">
+                           and coalesce(배분여부, 'false') = #{distributeYn}
+                         </if>
+                         <if test="existOrderYn != null and existOrderYn != ''">
+                           and coalesce(기존주문여부, '신규주문') = #{existOrderYn}
+                         </if>
+                       ) x
+                 where stateName is not null
+                 group by stateName
+                 order by stateName
+            </otherwise>
+        </choose>
+
+    </select>
+
+</mapper>

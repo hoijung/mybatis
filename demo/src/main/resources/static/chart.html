@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Sales Chart</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            padding: 12px 16px 16px;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .page-header {
+            flex-shrink: 0;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #343a40;
+        }
+
+        .page-title {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            color: #212529;
+        }
+
+        .filter-container {
+            flex-shrink: 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px 16px;
+            margin-bottom: 12px;
+            background-color: #f8f9fa;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            width: 100%;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            font-size: 14px;
+            color: #495057;
+            white-space: nowrap;
+        }
+
+        .filter-container input[type="month"],
+        .filter-container select {
+            padding: 6px 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+            background-color: white;
+            outline: none;
+            max-width: 160px;
+        }
+
+        .filter-container input[type="month"]:focus,
+        .filter-container select:focus {
+            border-color: #80bdff;
+        }
+
+        .btn-search {
+            margin-left: auto;
+            padding: 7px 22px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background-color 0.15s ease-in-out;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .btn-search:hover {
+            background-color: #0056b3;
+        }
+
+        .chart-container {
+            position: relative;
+            flex: 1;
+            min-height: 260px;
+            width: 100%;
+        }
+
+        /* 모바일: 768px 이하 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px 10px 12px;
+            }
+
+            .filter-container {
+                gap: 8px;
+            }
+
+            .filter-group {
+                flex: 0 0 calc(50% - 4px);
+                min-width: 0;
+            }
+
+            .filter-group label {
+                min-width: 72px;
+                font-size: 13px;
+            }
+
+            .filter-container input[type="month"],
+            .filter-container select {
+                flex: 1;
+                width: 100%;
+                max-width: none;
+                font-size: 13px;
+            }
+
+            .btn-search {
+                flex: 0 0 100%;
+                margin-left: 0;
+                padding: 9px;
+                font-size: 15px;
+            }
+        }
+
+        /* 초소형 모바일: 480px 이하 */
+        @media (max-width: 480px) {
+            .filter-group {
+                flex: 0 0 100%;
+                flex-direction: row;
+                align-items: center;
+            }
+
+            .filter-group label {
+                min-width: 72px;
+                flex-shrink: 0;
+            }
+
+            .filter-container input[type="month"],
+            .filter-container select {
+                flex: 1;
+                width: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="filter-container">
+        <div class="filter-group">
+            <label for="startDate">조회기간:</label>
+            <input type="month" id="startDate" value="2026-01"
+            onchange="loadSalesChart()">
+            <span>~</span>
+            <input type="month" id="endDate" value="2026-09"
+            onchange="loadSalesChart()">
+        </div>
+
+        <div class="filter-group">
+            <label for="distributeYn">배분여부:</label>
+            <select id="distributeYn" onchange="loadSalesChart()">
+                <option value="">전체</option>
+                <option value="true">배분</option>
+                <option value="false">미배분</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="existOrderYn">기존주문:</label>
+            <select id="existOrderYn" onchange="loadSalesChart()">
+                <option value="">전체</option>
+                <option value="신규주문">신규주문</option>
+                <option value="재주문">재주문</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="viewType">조회구분:</label>
+            <select id="viewType" onchange="renderChart()">
+                <option value="count">주문 건수</option>
+                <option value="amount">결재금액</option>
+                <option value="printCount">인쇄횟수</option>
+            </select>
+        </div>
+
+        <button type="button" class="btn-search" onclick="loadSalesChart()">조회</button>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="salesChart"></canvas>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let salesChart = null;
+        let cachedData = [];
+
+        async function loadSalesChart() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const distributeYn = document.getElementById('distributeYn').value;
+            const existOrderYn = document.getElementById('existOrderYn').value;
+
+            try {
+                let url = `/api/monthly-orders?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
+                if (distributeYn) {
+                    url += `&distributeYn=${encodeURIComponent(distributeYn)}`;
+                }
+                if (existOrderYn) {
+                    url += `&existOrderYn=${encodeURIComponent(existOrderYn)}`;
+                }
+                const response = await fetch(url);
+                cachedData = await response.json();
+
+                renderChart();
+            } catch (error) {
+                console.error('차트 데이터를 불러오는 중 오류 발생:', error);
+                alert('데이터를 가져오지 못했습니다.');
+            }
+        }
+
+        function renderChart() {
+            if (!cachedData || cachedData.length === 0) {
+                if (salesChart) {
+                    salesChart.destroy();
+                    salesChart = null;
+                }
+                return;
+            }
+
+            const viewType = document.getElementById('viewType').value;
+            const labels = cachedData.map(row => row.orderdate || row.orderDate || '');
+
+            let labelName = '주문 건수 (건)';
+            let unit = '건';
+            let bgColor = 'rgba(54, 162, 235, 0.6)';
+            let borderColor = 'rgba(54, 162, 235, 1)';
+
+            if (viewType === 'amount') {
+                labelName = '결재금액 (원)';
+                unit = '원';
+                bgColor = 'rgba(255, 99, 132, 0.6)';
+                borderColor = 'rgba(255, 99, 132, 1)';
+            } else if (viewType === 'printCount') {
+                labelName = '인쇄횟수 (회)';
+                unit = '회';
+                bgColor = 'rgba(16, 185, 129, 0.6)';
+                borderColor = 'rgba(16, 185, 129, 1)';
+            }
+
+            const values = cachedData.map(row => {
+                if (viewType === 'amount') {
+                    return Number(row.totalamount || row.totalAmount || 0);
+                } else if (viewType === 'printCount') {
+                    return Number(row.totalprintcount || row.totalPrintCount || 0);
+                } else {
+                    return Number(row.ordercount || row.orderCount || 0);
+                }
+            });
+
+            // 기존 차트가 있다면 파괴 후 새로 생성
+            if (salesChart) {
+                salesChart.destroy();
+            }
+
+            // 각 막대(bar) 상단에 값을 표시하는 플러그인
+            const barValuePlugin = {
+                id: 'barValuePlugin',
+                afterDatasetsDraw(chart) {
+                    const { ctx, data } = chart;
+                    ctx.save();
+                    ctx.font = '600 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                    ctx.fillStyle = '#1e293b';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+
+                    chart.getDatasetMeta(0).data.forEach((bar, index) => {
+                        const val = data.datasets[0].data[index];
+                        if (val !== undefined && val !== null && val > 0) {
+                            const text = Number(val).toLocaleString() + unit;
+                            ctx.fillText(text, bar.x, bar.y - 5);
+                        }
+                    });
+                    ctx.restore();
+                }
+            };
+
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            salesChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: labelName,
+                        data: values,
+                        backgroundColor: bgColor,
+                        borderColor: borderColor,
+                        borderWidth: 1
+                    }]
+                },
+                plugins: [barValuePlugin],
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            top: 24 // 막대 위 텍스트가 잘리지 않도록 상단 여백 확보
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    let val = context.raw || 0;
+                                    return ` ${labelName}: ${Number(val).toLocaleString()}${unit}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grace: '8%', // 막대 상단 텍스트를 위한 여유 공간 확보
+                            ticks: {
+                                callback: function (value) {
+                                    return value.toLocaleString() + unit;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 초기 화면 로드 시 조회
+        loadSalesChart();
+    </script>
+</body>
+
+</html>

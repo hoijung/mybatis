@@ -2,8 +2,15 @@ server:
   port: 8081
 
 spring:
+  web:
+    resources:
+      static-locations:
+        - file:C:\Project\Access\
+        - file:D:\Job\git\semo\src\main\resources\static\ # 개발 시 소스 경로 직접 참조
+        - classpath:/static/
   datasource:
-    url: jdbc:postgresql://127.0.0.1:5432/postgres
+    # url: jdbc:postgresql://127.0.0.1:5432/postgres
+    url: jdbc:postgresql://semo.ch26amamu9to.ap-northeast-2.rds.amazonaws.com:5432/postgres
     username: postgres
     password: 12345678
     driver-class-name: org.postgresql.Driver
@@ -11,12 +18,17 @@ spring:
 mybatis:
   mapper-locations: classpath:/mapper/**/*.xml
   configuration:
-      log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
 
 logging:
-   file:
-      name: logs/app.log
-   charset:
-      console: UTF-8
-      file: UTF-8
+  file:
+    name: logs/app.log
+  charset:
+    console: UTF-8
+    file: UTF-8
+  level:
+    root: INFO
+    com.example.demo.mapper: INFO
+    org.apache.ibatis: WARN
+    org.mybatis: WARN
    

@@ -10,7 +10,7 @@
     </settings>
 
     <mappers>
-        <mapper resource="mapper/UserMapper.xml"/>
+        <mapper resource="mapper/StaticsMapper.xml"/>
     </mappers>
 
 </configuration>

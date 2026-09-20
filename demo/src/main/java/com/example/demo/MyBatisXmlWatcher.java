@@ -18,7 +18,7 @@ public class MyBatisXmlWatcher {
 
                 try {
                     // 파일 감시
-                    System.out.println("Watcher 실행 중");
+                    // System.out.println("Watcher 실행 중");
 
                     Thread.sleep(1000);
 

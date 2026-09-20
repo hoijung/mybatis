@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>상태별 현황</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            padding: 12px 16px 16px;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .filter-container {
+            flex-shrink: 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px 16px;
+            margin-bottom: 12px;
+            background-color: #f8f9fa;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            width: 100%;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            font-size: 14px;
+            color: #495057;
+            white-space: nowrap;
+        }
+
+        .filter-container input[type="month"],
+        .filter-container select {
+            padding: 6px 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+            background-color: white;
+            outline: none;
+            max-width: 160px;
+        }
+
+        .filter-container input[type="month"]:focus,
+        .filter-container select:focus {
+            border-color: #80bdff;
+        }
+
+        .btn-search {
+            margin-left: auto;
+            padding: 7px 22px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background-color 0.15s ease-in-out;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .btn-search:hover {
+            background-color: #0056b3;
+        }
+
+        .chart-container {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 10px 10px 12px; }
+            .filter-container { gap: 8px; }
+            .filter-group { flex: 0 0 calc(50% - 4px); min-width: 0; }
+            .filter-group label { min-width: 72px; font-size: 13px; }
+            .filter-container input[type="month"],
+            .filter-container select {
+                flex: 1;
+                width: 100%;
+                max-width: none;
+                font-size: 13px;
+            }
+            .btn-search {
+                flex: 0 0 100%;
+                margin-left: 0;
+                padding: 9px;
+                font-size: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .filter-group {
+                flex: 0 0 100%;
+                flex-direction: row;
+                align-items: center;
+            }
+
+            .filter-group label {
+                min-width: 72px;
+                flex-shrink: 0;
+            }
+
+            .filter-container input[type="month"],
+            .filter-container select {
+                flex: 1;
+                width: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="filter-container">
+        <div class="filter-group">
+            <label for="startDate">조회월:</label>
+            <input type="month" id="startDate" value="2026-09" onchange="loadStateChart()">
+        </div>
+
+        <div class="filter-group">
+            <label for="distributeYn">배분여부:</label>
+            <select id="distributeYn" onchange="loadStateChart()">
+                <option value="">전체</option>
+                <option value="true">배분</option>
+                <option value="false">미배분</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="existOrderYn">기존주문여부:</label>
+            <select id="existOrderYn" onchange="loadStateChart()">
+                <option value="">전체</option>
+                <option value="신규주문">신규주문</option>
+                <option value="재주문">재주문</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="stateType">상태구분:</label>
+            <select id="stateType" onchange="loadStateChart()">
+                <option value="all">전체 상태 분포</option>
+                <option value="pickingYn">피킹완료</option>
+                <option value="printYn">인쇄완료</option>
+                <option value="distributeYn">배분여부</option>
+                <option value="completeYn">완료여부</option>
+            </select>
+        </div>
+
+        <button type="button" class="btn-search" onclick="loadStateChart()">조회</button>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="stateChart"></canvas>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let stateChart = null;
+        let cachedData = [];
+
+        const BG_COLORS = [
+            'rgba(255, 99, 132, 0.7)',
+            'rgba(54, 162, 235, 0.7)',
+            'rgba(255, 206, 86, 0.7)',
+            'rgba(75, 192, 192, 0.7)',
+            'rgba(153, 102, 255, 0.7)',
+            'rgba(255, 159, 64, 0.7)',
+            'rgba(99, 255, 132, 0.7)',
+            'rgba(235, 54, 162, 0.7)',
+            'rgba(86, 255, 206, 0.7)',
+            'rgba(192, 75, 192, 0.7)'
+        ];
+
+        async function loadStateChart() {
+            const startDate = document.getElementById('startDate').value;
+            const stateType = document.getElementById('stateType').value;
+            const distributeYn = document.getElementById('distributeYn').value;
+            const existOrderYn = document.getElementById('existOrderYn').value;
+
+            try {
+                let url = `/api/state-stats?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(startDate)}&stateType=${encodeURIComponent(stateType)}`;
+                if (distributeYn) {
+                    url += `&distributeYn=${encodeURIComponent(distributeYn)}`;
+                }
+                if (existOrderYn) {
+                    url += `&existOrderYn=${encodeURIComponent(existOrderYn)}`;
+                }
+
+                const response = await fetch(url);
+                cachedData = await response.json();
+                renderStateChart();
+            } catch (error) {
+                console.error('상태 차트 데이터를 불러오는 중 오류 발생:', error);
+                alert('데이터를 가져오지 못했습니다.');
+            }
+        }
+
+        function renderStateChart() {
+            if (!cachedData || cachedData.length === 0) {
+                if (stateChart) {
+                    stateChart.destroy();
+                    stateChart = null;
+                }
+                return;
+            }
+
+            const labels = cachedData.map(row => row.statename || row.stateName || '');
+            const values = cachedData.map(row => Number(row.statecount || row.stateCount || 0));
+
+            if (stateChart) {
+                stateChart.destroy();
+                stateChart = null;
+            }
+
+            const canvas = document.getElementById('stateChart');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const pieLabelPlugin = {
+                id: 'pieLabelPlugin',
+                afterDatasetsDraw(chart) {
+                    const ctx = chart.ctx;
+                    ctx.save();
+                    const dataset = chart.data.datasets[0];
+                    const total = dataset.data.reduce((a, b) => a + b, 0);
+
+                    const firstArc = chart.getDatasetMeta(0).data[0];
+                    if (firstArc) {
+                        const centerX = firstArc.x;
+                        const centerY = firstArc.y;
+                        ctx.fillStyle = '#222';
+                        ctx.font = 'bold 14px sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('합계', centerX, centerY - 10);
+
+                        ctx.font = 'bold 16px sans-serif';
+                        ctx.fillText(`${total.toLocaleString()}건`, centerX, centerY + 12);
+                    }
+
+                    chart.getDatasetMeta(0).data.forEach((arc, i) => {
+                        const { x, y } = arc.getCenterPoint();
+                        const value = dataset.data[i];
+                        const label = chart.data.labels[i];
+                        const percent = total ? ((value / total) * 100).toFixed(1) + '%' : '';
+
+                        ctx.fillStyle = '#000';
+                        ctx.font = '12px sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(`${label}: ${value.toLocaleString()}건 (${percent})`, x, y);
+                    });
+                    ctx.restore();
+                }
+            };
+
+            stateChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: BG_COLORS.slice(0, labels.length)
+                    }]
+                },
+                plugins: [pieLabelPlugin],
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                usePointStyle: true,
+                                boxWidth: 12,
+                                padding: 16
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const val = context.raw || 0;
+                                    const pct = total ? ((val / total) * 100).toFixed(1) : '0.0';
+                                    return ` ${context.label}: ${val.toLocaleString()}건 (${pct}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        loadStateChart();
+    </script>
+</body>
+
+</html>
