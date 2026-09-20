@@ -14,5 +14,7 @@ public interface StaticsMapper {
 
     List<Map<String, Object>> selectTeam(Map<String, Object> param);
 
+    List<Map<String, Object>> selectPrintMethod(Map<String, Object> param);
+
     List<Map<String, Object>> selectState(Map<String, Object> param);
 }

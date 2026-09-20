@@ -180,6 +180,46 @@
 
     </select>
 
+        <select id="selectPrintMethod"
+              parameterType="map"
+              resultType="map">
+
+           select case when 인쇄방법 is null or trim(인쇄방법) = '' then '미지정' else 인쇄방법 end as methodName,
+                count(*) as orderCount,
+                coalesce(sum(결재금액), 0) as totalAmount,
+                coalesce(sum(
+                    (case when 인쇄도수 = '1도인쇄' then 1
+                        when 인쇄도수 = '2도인쇄' then 2
+                        when 인쇄도수 = '3도인쇄' then 3
+                        when 인쇄도수 = '4도인쇄' then 4
+                        when 인쇄도수 = 'CMYK인쇄' then 1
+                        else 0
+                    end) *
+                    (case when 인쇄면 = '단면' then 1
+                        when 인쇄면 = '양면' then 2
+                        else 0
+                    end) *
+                    (case when isnumber(replace(제작장수, ',', ''))
+                        then cast(replace(제작장수, ',', '') as integer)
+                        else 0
+                    end) *
+                    (case when 인쇄방법 in ('실크인쇄', '간편인쇄') then 1
+                        else 0
+                    end)
+                ), 0) as totalPrintCount
+            from public.인쇄정보
+            where 주문일자 like #{startDate} || '%'
+            <if test="distributeYn != null and distributeYn != ''">
+             and coalesce(배분여부, 'false') = #{distributeYn}
+            </if>
+            <if test="existOrderYn != null and existOrderYn != ''">
+             and coalesce(기존주문여부, '신규주문') = #{existOrderYn}
+            </if>
+            group by case when 인쇄방법 is null or trim(인쇄방법) = '' then '미지정' else 인쇄방법 end
+            order by methodName
+
+        </select>
+
     <select id="selectState"
             parameterType="map"
             resultType="map">

@@ -46,6 +46,16 @@ public class StaticsController {
         return userService.selectTeam(startDate, endDate, distributeYn, existOrderYn);
     }
 
+    @GetMapping("/method-stats")
+    public List<Map<String, Object>> methodStats(
+            @org.springframework.web.bind.annotation.RequestParam(name = "startDate", defaultValue = "2026-01") String startDate,
+            @org.springframework.web.bind.annotation.RequestParam(name = "endDate", defaultValue = "2026-12") String endDate,
+            @org.springframework.web.bind.annotation.RequestParam(name = "distributeYn", required = false) String distributeYn,
+            @org.springframework.web.bind.annotation.RequestParam(name = "existOrderYn", required = false) String existOrderYn) {
+
+        return userService.selectPrintMethod(startDate, endDate, distributeYn, existOrderYn);
+    }
+
     @GetMapping("/state-stats")
     public List<Map<String, Object>> stateStats(
             @org.springframework.web.bind.annotation.RequestParam(name = "startDate", defaultValue = "202601") String startDate,

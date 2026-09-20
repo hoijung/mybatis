@@ -13,6 +13,8 @@ public class StaticsService {
 
     private static final String START_DATE = "startDate";
     private static final String END_DATE = "endDate";
+    private static final String DISTRIBUTE_YN = "distributeYn";
+    private static final String EXIST_ORDER_YN = "existOrderYn";
 
     private final StaticsMapper userMapper;
 
@@ -34,8 +36,8 @@ public class StaticsService {
 
         param.put(START_DATE, startDate);
         param.put(END_DATE, endDate);
-        param.put("distributeYn", distributeYn);
-        param.put("existOrderYn", existOrderYn);
+        param.put(DISTRIBUTE_YN, distributeYn);
+        param.put(EXIST_ORDER_YN, existOrderYn);
 
         return userMapper.selectUser(param);
     }
@@ -59,8 +61,8 @@ public class StaticsService {
 
         param.put(START_DATE, startDate);
         param.put(END_DATE, endDate);
-        param.put("distributeYn", distributeYn);
-        param.put("existOrderYn", existOrderYn);
+        param.put(DISTRIBUTE_YN, distributeYn);
+        param.put(EXIST_ORDER_YN, existOrderYn);
         param.put("etcThreshold", threshold);
 
         return userMapper.selectProd(param);
@@ -71,10 +73,21 @@ public class StaticsService {
 
         param.put(START_DATE, startDate);
         param.put(END_DATE, endDate);
-        param.put("distributeYn", distributeYn);
-        param.put("existOrderYn", existOrderYn);
+        param.put(DISTRIBUTE_YN, distributeYn);
+        param.put(EXIST_ORDER_YN, existOrderYn);
 
         return userMapper.selectTeam(param);
+    }
+
+    public List<Map<String, Object>> selectPrintMethod(String startDate, String endDate, String distributeYn, String existOrderYn) {
+        Map<String, Object> param = new HashMap<>();
+
+        param.put(START_DATE, startDate);
+        param.put(END_DATE, endDate);
+        param.put(DISTRIBUTE_YN, distributeYn);
+        param.put(EXIST_ORDER_YN, existOrderYn);
+
+        return userMapper.selectPrintMethod(param);
     }
 
     public List<Map<String, Object>> selectState(String startDate, String endDate, String stateType) {
@@ -87,8 +100,8 @@ public class StaticsService {
         param.put(START_DATE, startDate);
         param.put(END_DATE, endDate);
         param.put("stateType", stateType);
-        param.put("distributeYn", distributeYn);
-        param.put("existOrderYn", existOrderYn);
+        param.put(DISTRIBUTE_YN, distributeYn);
+        param.put(EXIST_ORDER_YN, existOrderYn);
 
         return userMapper.selectState(param);
     }
